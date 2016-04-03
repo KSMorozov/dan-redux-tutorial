@@ -24,6 +24,8 @@
     "webpack-dev-middleware": "^1.6.1"
   },
   "dependencies": {
+    "deep-freeze": "0.0.1",
+    "expect": "^1.16.0",
     "react": "^0.14.8",
     "react-dom": "^0.14.8"
   }
