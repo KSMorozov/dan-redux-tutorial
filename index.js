@@ -47,6 +47,19 @@ const visibilityFilter = (state = 'SHOW_ALL', action) => {
 const todoApp = combineReducers({ todos, visibilityFilter });
 const store = createStore(todoApp);
 
+const getVisibleTodos = (todos, filter) => {
+  switch (filter) {
+    case 'SHOW_ALL':
+      return todos;
+    case 'SHOW_COMPLETED':
+      return todos.filter((t) => t.completed);
+    case 'SHOW_ACTIVE':
+      return todos.filter((t) => !t.completed);
+    default:
+      return todos;
+  }
+};
+
 let id = 0;
 const next = () => id++;
 
@@ -62,8 +75,29 @@ Todo.propTypes = {
   todo: PropTypes.object.isRequired,
 };
 
+const FilterLink = ({ filter, children, currentFilter }) => (
+    filter === currentFilter
+    ? <span>{children}</span>
+    : <a href="#"
+      onClick={(e) => (
+        e.preventDefault()
+        || store.dispatch({ type: 'SET_VISIBILITY_FILTER', filter })
+      )}
+    >
+      {children}
+    </a>
+);
+
+FilterLink.propTypes = {
+  children: PropTypes.node.isRequired,
+  filter: PropTypes.string.isRequired,
+  currentFilter: PropTypes.string.isRequired,
+};
+
 class App extends Component {
   render() {
+    const { todos, visibilityFilter } = this.props;
+    const visibleTodos = getVisibleTodos(todos, visibilityFilter);
     return (
       <div>
         <form
@@ -79,8 +113,22 @@ class App extends Component {
           </button>
         </form>
         <ul>
-          {this.props.todos.map((td) => <Todo key={td.id} todo={td} />)}
+          {visibleTodos.map((td) => <Todo key={td.id} todo={td} />)}
         </ul>
+        <p>
+          Show:
+          <FilterLink filter="SHOW_ALL" currentFilter={visibilityFilter}>
+            All
+          </FilterLink>
+          {' '}
+          <FilterLink filter="SHOW_ACTIVE" currentFilter={visibilityFilter}>
+            Active
+          </FilterLink>
+          {' '}
+          <FilterLink filter="SHOW_COMPLETED" currentFilter={visibilityFilter}>
+            Completed
+          </FilterLink>
+        </p>
       </div>
     );
   }
@@ -88,11 +136,12 @@ class App extends Component {
 
 App.propTypes = {
   todos: PropTypes.array.isRequired,
+  visibilityFilter: PropTypes.string.isRequired,
 };
 
 const render = () => {
   ReactDOM.render(<App
-    todos={store.getState().todos}
+    {...store.getState()}
   />, document.getElementById('root'));
 };
 
