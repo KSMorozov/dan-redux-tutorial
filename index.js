@@ -1,4 +1,4 @@
-import React, { Component, PropTypes } from 'react';
+import React, { PropTypes } from 'react';
 import ReactDOM from 'react-dom';
 import { createStore, combineReducers } from 'redux';
 
@@ -95,14 +95,37 @@ TodoList.propTypes = {
   onTodoClick: PropTypes.func.isRequired,
 };
 
-// Filter Component
-const FilterLink = ({ filter, children, currentFilter }) => (
+// Add Todo Component
+const AddTodo = ({ onAddClick }) => {
+  let input;
+  return (
+    <form
+      onSubmit={(e) =>
+        (e.preventDefault()
+        || onAddClick(input.value))
+        && (input.value = '')
+      }
+    >
+      <input ref={(node) => (input = node)} />
+      <button type="submit">
+        Add Todo
+      </button>
+    </form>
+  );
+};
+
+AddTodo.propTypes = {
+  onAddClick: PropTypes.func.isRequired,
+};
+
+// Filter Link Component
+const FilterLink = ({ filter, children, currentFilter, onClick }) => (
     filter === currentFilter
     ? <span>{children}</span>
     : <a href="#"
       onClick={(e) => (
         e.preventDefault()
-        || store.dispatch({ type: 'SET_VISIBILITY_FILTER', filter })
+        || onClick(filter)
       )}
     >
       {children}
@@ -113,49 +136,46 @@ FilterLink.propTypes = {
   children: PropTypes.node.isRequired,
   filter: PropTypes.string.isRequired,
   currentFilter: PropTypes.string.isRequired,
+  onClick: PropTypes.func.isRequired,
+};
+
+// Footer Component
+const Footer = ({ visibilityFilter, onFilterClick }) =>
+  <p>
+    Show:
+    <FilterLink filter="SHOW_ALL" currentFilter={visibilityFilter} onClick={onFilterClick}>
+      All
+    </FilterLink>
+    {' '}
+    <FilterLink filter="SHOW_ACTIVE" currentFilter={visibilityFilter} onClick={onFilterClick}>
+      Active
+    </FilterLink>
+    {' '}
+    <FilterLink filter="SHOW_COMPLETED" currentFilter={visibilityFilter} onClick={onFilterClick}>
+      Completed
+    </FilterLink>
+  </p>;
+
+Footer.propTypes = {
+  visibilityFilter: PropTypes.string.isRequired,
+  onFilterClick: PropTypes.func.isRequired,
 };
 
 // App Component
-class App extends Component {
-  render() {
-    const { todos, visibilityFilter } = this.props;
-    const visibleTodos = getVisibleTodos(todos, visibilityFilter);
-    return (
-      <div>
-        <form
-          onSubmit={(e) =>
-            (e.preventDefault()
-            || store.dispatch({ type: 'ADD_TODO', text: this.input.value, id: next() })
-            && (this.input.value = ''))
-          }
-        >
-          <input ref={(node) => (this.input = node)}></input>
-          <button type="submit">
-            Add Todo
-          </button>
-        </form>
-        <TodoList
-          todos={visibleTodos}
-          onTodoClick={(id) => store.dispatch({ type: 'TOGGLE_TODO', id })}
-        />
-        <p>
-          Show:
-          <FilterLink filter="SHOW_ALL" currentFilter={visibilityFilter}>
-            All
-          </FilterLink>
-          {' '}
-          <FilterLink filter="SHOW_ACTIVE" currentFilter={visibilityFilter}>
-            Active
-          </FilterLink>
-          {' '}
-          <FilterLink filter="SHOW_COMPLETED" currentFilter={visibilityFilter}>
-            Completed
-          </FilterLink>
-        </p>
-      </div>
-    );
-  }
-}
+const App = ({ todos, visibilityFilter }) =>
+  <div>
+    <AddTodo
+      onAddClick={(text) => store.dispatch({ type: 'ADD_TODO', id: next(), text })}
+    />
+    <TodoList
+      todos={getVisibleTodos(todos, visibilityFilter)}
+      onTodoClick={(id) => store.dispatch({ type: 'TOGGLE_TODO', id })}
+    />
+    <Footer
+      visibilityFilter={visibilityFilter}
+      onFilterClick={(filter) => store.dispatch({ type: 'SET_VISIBILITY_FILTER', filter })}
+    />
+  </div>;
 
 App.propTypes = {
   todos: PropTypes.array.isRequired,
