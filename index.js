@@ -63,18 +63,39 @@ const getVisibleTodos = (todos, filter) => {
 let id = 0;
 const next = () => id++;
 
-const Todo = ({ todo }) =>
+// Todo Component
+const Todo = ({ completed, text, onClick }) =>
   <li
-    style={{ textDecoration: todo.completed ? 'line-through' : 'none' }}
-    onClick={() => store.dispatch({ type: 'TOGGLE_TODO', id: todo.id })}
+    style={{ textDecoration: completed ? 'line-through' : 'none' }}
+    onClick={onClick}
   >
-    {todo.text}
+    {text}
   </li>;
 
 Todo.propTypes = {
-  todo: PropTypes.object.isRequired,
+  completed: PropTypes.bool.isRequired,
+  onClick: PropTypes.func.isRequired,
+  text: PropTypes.string.isRequired,
 };
 
+// TodoList Component.
+const TodoList = ({ todos, onTodoClick }) =>
+  <ul>
+    {todos.map((todo) =>
+        <Todo
+          onClick={() => onTodoClick(todo.id)}
+          key={todo.id}
+          {...todo}
+        />
+    )}
+  </ul>;
+
+TodoList.propTypes = {
+  todos: PropTypes.array.isRequired,
+  onTodoClick: PropTypes.func.isRequired,
+};
+
+// Filter Component
 const FilterLink = ({ filter, children, currentFilter }) => (
     filter === currentFilter
     ? <span>{children}</span>
@@ -94,6 +115,7 @@ FilterLink.propTypes = {
   currentFilter: PropTypes.string.isRequired,
 };
 
+// App Component
 class App extends Component {
   render() {
     const { todos, visibilityFilter } = this.props;
@@ -112,9 +134,10 @@ class App extends Component {
             Add Todo
           </button>
         </form>
-        <ul>
-          {visibleTodos.map((td) => <Todo key={td.id} todo={td} />)}
-        </ul>
+        <TodoList
+          todos={visibleTodos}
+          onTodoClick={(id) => store.dispatch({ type: 'TOGGLE_TODO', id })}
+        />
         <p>
           Show:
           <FilterLink filter="SHOW_ALL" currentFilter={visibilityFilter}>
@@ -139,11 +162,13 @@ App.propTypes = {
   visibilityFilter: PropTypes.string.isRequired,
 };
 
+// Render function
 const render = () => {
   ReactDOM.render(<App
     {...store.getState()}
   />, document.getElementById('root'));
 };
 
+// Subscribe to Store.
 store.subscribe(render);
 render();
